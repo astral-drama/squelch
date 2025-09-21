@@ -25,12 +25,16 @@ show_status() {
     for jail in $(fail2ban-client status 2>/dev/null | grep "Jail list:" | cut -d: -f2 | tr ',' ' '); do
         jail=$(echo $jail | xargs)
         if [ ! -z "$jail" ]; then
-            banned=$(fail2ban-client status $jail 2>/dev/null | grep "Currently banned:" | awk '{print $3}')
-            failed=$(fail2ban-client status $jail 2>/dev/null | grep "Currently failed:" | awk '{print $3}')
+            banned=$(fail2ban-client status $jail 2>/dev/null | grep "Currently banned:" | awk '{print $NF}')
+            failed=$(fail2ban-client status $jail 2>/dev/null | grep "Currently failed:" | awk '{print $NF}')
 
-            if [ "$banned" -gt 0 ]; then
+            # Ensure we have numeric values
+            banned=${banned:-0}
+            failed=${failed:-0}
+
+            if [[ "$banned" =~ ^[0-9]+$ ]] && [ "$banned" -gt 0 ]; then
                 echo -e "  $jail: ${RED}$banned banned${NC}, $failed failed"
-            elif [ "$failed" -gt 0 ]; then
+            elif [[ "$failed" =~ ^[0-9]+$ ]] && [ "$failed" -gt 0 ]; then
                 echo -e "  $jail: ${YELLOW}$failed failed${NC}"
             else
                 echo -e "  $jail: ${GREEN}Clean${NC}"
