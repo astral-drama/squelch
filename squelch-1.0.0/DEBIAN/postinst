@@ -1,0 +1,65 @@
+#!/bin/bash
+# Post-installation script for squelch
+
+set -e
+
+echo "🔧 Configuring squelch security suite..."
+
+# Enable fail2ban service
+systemctl enable fail2ban 2>/dev/null || true
+
+# Start or restart fail2ban depending on current state
+if systemctl is-active --quiet fail2ban; then
+    echo "Reloading fail2ban configuration..."
+    systemctl reload fail2ban 2>/dev/null || systemctl restart fail2ban
+else
+    echo "Starting fail2ban service..."
+    systemctl start fail2ban
+    # Give fail2ban a moment to fully start before reloading
+    sleep 2
+fi
+
+# Reload fail2ban configuration to pick up new jails
+echo "Applying squelch configuration..."
+fail2ban-client reload 2>/dev/null || {
+    echo "Failed to reload via client, restarting service..."
+    systemctl restart fail2ban
+    sleep 2
+}
+
+# Set up log rotation for Caddy logs if directory exists
+if [ -d "/var/log/caddy" ]; then
+    cat > /etc/logrotate.d/caddy << 'EOF'
+/var/log/caddy/*.log {
+    weekly
+    rotate 52
+    compress
+    delaycompress
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        systemctl reload caddy 2>/dev/null || true
+    endscript
+}
+EOF
+fi
+
+# Create squelch user for monitoring
+if ! id "squelch" &>/dev/null; then
+    useradd --system --home-dir /var/lib/squelch --create-home --shell /bin/false squelch
+fi
+
+# Set permissions
+chmod +x /usr/local/bin/squelch-monitor
+chmod +x /usr/local/bin/squelch-status
+chmod +x /usr/local/bin/squelch-ban
+
+# Add squelch user to required groups for monitoring
+usermod -a -G adm squelch 2>/dev/null || true
+
+echo "✅ squelch security suite configured successfully!"
+echo "📊 Run 'squelch-status' to view security status"
+echo "🔍 Run 'squelch-monitor' for real-time monitoring"
+
+exit 0

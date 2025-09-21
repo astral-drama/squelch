@@ -1,0 +1,19 @@
+Package: squelch
+Version: 1.0.0
+Section: admin
+Priority: optional
+Architecture: all
+Depends: fail2ban, iptables, openssh-server, curl, wget
+Maintainer: Squelch Security <security@squelch.dev>
+Description: Comprehensive server security and monitoring suite
+ Squelch provides a complete security hardening solution for Debian servers,
+ including:
+ .
+  * fail2ban configuration with custom filters for HTTP/SSH attacks
+  * SSH hardening with key-based authentication and port changes
+  * Security monitoring tools and dashboards
+  * Automated attack detection and IP blocking
+  * Real-time security status reporting
+ .
+ This package configures a production-ready security setup suitable for
+ web servers, reverse proxies, and general-purpose Linux servers.

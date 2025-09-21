@@ -1,0 +1,14 @@
+#!/bin/bash
+# Pre-removal script for squelch
+
+set -e
+
+echo "🔄 Preparing to remove squelch security suite..."
+
+# Stop services gracefully
+systemctl stop fail2ban 2>/dev/null || true
+
+echo "⚠️  squelch security suite will be removed."
+echo "   fail2ban configurations will remain for safety."
+
+exit 0
